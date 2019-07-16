@@ -1,6 +1,6 @@
 import React from "react";
 import { Route } from "react-router-dom";
-import CollectionsOverview from "../../components/collections-oeverview/collections-overview.component";
+import CollectionsOverview from "../../components/collections-overview/collections-overview.component";
 import CollectionPage from "../collection/collection.component";
 
 // since shop component is already a routed component we have access to router props. Remember that if the component is not routed we have to use withRouter HOC to have access to them

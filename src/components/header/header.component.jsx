@@ -1,43 +1,50 @@
 import React from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import { auth } from "../../firebase/firebase.utils";
 import { connect } from "react-redux"; // connect is a HOC (higher order component) that lets us moddify our component to have access to things related with redux, included the store
 // HOC are functions that takes components as arguments and then returns you a new modified component
 import { createStructuredSelector } from "reselect";
+
 import CartIcon from "../cart-icon/cart-icon.component";
 import CartDropdown from "../cart-dropdown/cart-dropdown.component";
 import { selectCartHidden } from "../../redux/cart/cart.selectors";
 import { selectCurrentUser } from "../../redux/user/user.selectors";
-import "./header.styles.scss";
+import { ReactComponent as Logo } from "../../assets/crown.svg";
+
+import {
+  HeaderContainer,
+  LogoContainer,
+  OptionsContainer,
+  OptionDivContainer,
+  OptionLinkContainer
+} from "./header.styles";
+// import "./header.styles.scss";
 // this is a special syntax in React for importing SVG.
 // The ReactComponent import name is special and tells Create React App that you want a React component that renders an SVG
-import { ReactComponent as Logo } from "../../assets/crown.svg";
 const Header = ({ currentUser, hidden }) => (
-  <div className="header">
-    <Link className="logo-container" to="/">
+  <HeaderContainer>
+    <LogoContainer to="/">
       <Logo className="logo" />
-    </Link>
-    <div className="options">
-      <Link className="option" to="/shop">
-        SHOP
-      </Link>
-      <Link className="option" to="/contact">
-        CONTACT
-      </Link>
+    </LogoContainer>
+    <OptionsContainer>
+      <OptionLinkContainer to="/shop">SHOP</OptionLinkContainer>
+      <OptionLinkContainer to="/contact">CONTACT</OptionLinkContainer>
       {currentUser ? (
-        <div className="option" onClick={() => auth.signOut()}>
+        //Instead of creating a second styled component with the same style properties than the OptionLinkContainer we could reuse it if the only difference is the element to return using the as= property | as="when it is an html element" as={when it is a component}
+        //<OptionLinkContainer as="div" onClick={() => auth.signOut()}>
+        //  SIGN OUT
+        //</OptionLinkContainer>
+        <OptionDivContainer as="div" onClick={() => auth.signOut()}>
           {/* auth.signOut uses the communication channel opened between the app and firebase and sends a null user to the app when the user signs out */}
           SIGN OUT
-        </div>
+        </OptionDivContainer>
       ) : (
-        <Link className="option" to="/signin">
-          SIGN IN
-        </Link>
+        <OptionLinkContainer to="/signin">SIGN IN</OptionLinkContainer>
       )}
       <CartIcon />
-    </div>
+    </OptionsContainer>
     {hidden ? null : <CartDropdown />}
-  </div>
+  </HeaderContainer>
 );
 
 // const mapStateToProps = ({ user: { currentUser }, cart: { hidden } }) => ({
