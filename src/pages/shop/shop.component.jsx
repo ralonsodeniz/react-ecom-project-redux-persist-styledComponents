@@ -20,7 +20,7 @@ class ShopPage extends Component {
     const collectionRef = firestore.collection("collections"); // we create the reference object to our collections collection
     this.unsubscribeFromSnapshot = collectionRef.onSnapshot(snapshot => {
       // whenever the collectionRef updates or the code is run for the first time this collectionRef this will send us the snapshot representing the code of our collections objects array at the time when this code renders
-      const collectionsMap = convertCollectionSnapshotToMap(snapshot);
+      const collectionsMap = convertCollectionSnapshotToMap(snapshot); // this converts the snapshot into an object with the elements we need
       // we update the collection into the shop redux using the firebase util function
       updateCollections(collectionsMap);
     });
