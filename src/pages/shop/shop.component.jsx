@@ -5,39 +5,83 @@ import { connect } from "react-redux";
 import {
   firestore,
   convertCollectionSnapshotToMap
-} from "../../firebase/firebase.utils"; // we import firestore so we can fetch the data from the db
+} from "../../firebase/firebase.utils";
+import { updateCollections } from "../../redux/shop/shop.actions";
+import WithSpinner from "../../components/with-spinner/with-spiner.component";
 import CollectionsOverview from "../../components/collections-overview/collections-overview.component";
 import CollectionPage from "../collection/collection.component";
-import { updateCollections } from "../../redux/shop/shop.actions";
 
-// since shop component is already a routed component we have access to router props. Remember that if the component is not routed we have to use withRouter HOC to have access to them
+// we are going to create two components using WithSpinner and the components we want to render when the isLoading is false
+// here we pass to the HOC the first parameter that is the component to wrap, what we get in return is a function that expects the two arguments of the second parameter to return the component to render
+const CollectionsOverviewWithSpinner = WithSpinner(CollectionsOverview);
+const CollectionPageWithSpinner = WithSpinner(CollectionPage);
+
 class ShopPage extends Component {
-  unsubscribeFromSnapshot = null; // we will have to close the listener that we are going to start to know when a new snapshot is done
-  // the snapshot is going to be the snapshot representation of our collection
+  // constructor(props) {
+  //   super(props);
+
+  //   this.state = {
+  //     isLoading: true
+  //   };
+  // }
+
+  // this is a shorthand of the above code if we do not need the constructor
+  // we can do it because the constructor and the super call setup react will handle in the back for us so we don't have to write constructor and super everytime we need to use state
+  // when they see the state just before extending the react component it will get the constructur and super for us
+  state = {
+    loading: true
+  };
+
+  unsubscribeFromSnapshot = null;
 
   componentDidMount() {
     const { updateCollections } = this.props;
-    const collectionRef = firestore.collection("collections"); // we create the reference object to our collections collection
-    this.unsubscribeFromSnapshot = collectionRef.onSnapshot(snapshot => {
-      // whenever the collectionRef updates or the code is run for the first time this collectionRef this will send us the snapshot representing the code of our collections objects array at the time when this code renders
-      const collectionsMap = convertCollectionSnapshotToMap(snapshot); // this converts the snapshot into an object with the elements we need
-      // we update the collection into the shop redux using the firebase util function
+    // we create the reference object to our collections collection
+    const collectionRef = firestore.collection("collections");
+    // we are going to change the method we use from opening a channel to listeng to the onSnapshot observable to make simple API requests to firestore using its interface
+    // we delete the unsubscribeFromSnapShop since we are not going to use observables and subscribing a observer with its listener here we are going to use promises
+    // this.unsubscribeFromSnapshot = collectionRef.onSnapshot(snapshot => {
+    // we change the method onSnapshot that creates the observable and the listener we pass as a function and we use .get() to get the snapshot from the coleection reference object
+    // .get() makes an API call to fetch back the data asociated with the collection. .get() returns a promise
+    collectionRef.get().then(snapshot => {
+      // this converts the snapshot into an object with the elements we need
+      const collectionsMap = convertCollectionSnapshotToMap(snapshot);
+      // we update the collection into the shop redux
       updateCollections(collectionsMap);
+      this.setState({ loading: false });
     });
+    // we pass the snapshot object transformation to the .then() promise
   }
 
-  componentWillUnmount() {
-    this.unsubscribeFromSnapshot(); // and then we use it in the componentWillUnmount to close the subscription
-  }
+  // we don't need to unsubscribe the listener from the observable because we are not even open that communication in this case
+  //   componentWillUnmount() {
+  //     this.unsubscribeFromSnapshot();
+  //   }
+
+  // IMPORTANT!!! WHEN WE DO IT THIS WAY, USING PROMISES THE ONLY TIME WE GET NEW DATA FROM THE COLLECTIONS COLLECTION IN FIRESTORE IS WHEN WE REMOUNT THE SHOP COMPONENT
+  // WITH THE OBSERVABLE METHOD ONCE WE HAVE OPENED THE CHANNEL THE FIRST TIME WE MOUNT THE SHOP COMPONENT IT KEEPS REGISTERING EVERY CHANGE AND EXECUTING THE LISTENER FUNCION WHEN THERE IS A CHANGE, EITHER THE SHOP COMPONENT IS MOUNTED OR NOT
+  // in this case we are just doing one API call when we render the component and treating the data we get
 
   render() {
-    const { match } = this.props; // match.path is the exact route we are
+    const { match } = this.props;
+    const { loading } = this.state;
     return (
       <div className="shop-page">
-        <Route exact path={`${match.path}`} component={CollectionsOverview} />
+        {/* instead of using component we will use render={(properties we want to pass to the component) => component to render with the properties} */}
+        <Route
+          exact
+          path={`${match.path}`}
+          render={(
+            props // props are the Route props needed by the CollectionsOverview component
+          ) => (
+            <CollectionsOverviewWithSpinner isLoading={loading} {...props} /> // here we pass to the HOC created with WithSpinner the two arguments of the second parameter of the HOC function
+          )}
+        />
         <Route
           path={`${match.path}/:collectionId`}
-          component={CollectionPage}
+          render={props => (
+            <CollectionPageWithSpinner isLoading={loading} {...props} />
+          )}
         />
         {/* /:collectionId means what goes before the match.path, in this case what is next to /shop/ */}
         {/* thanks to this in the CollectionPage we will have access to a new object inside match, params, with will have a property called collectionId (what goes after the : is a param) which value would be the route after /shop (match.path) */}
@@ -46,7 +90,6 @@ class ShopPage extends Component {
   }
 }
 
-// we get the action to trigger the collection update in the redux
 const mapDispatchToProps = dispatch => ({
   updateCollections: collectionsMap =>
     dispatch(updateCollections(collectionsMap))

@@ -37,7 +37,7 @@ class App extends Component {
         // we check if t he userAuth object is not null
         const userRef = await createUserProfileDocument(userAuth); // we save the returned userRef object from the firestore with the id of the user that has loggedin
         this.unsubscribeFromSnapshot = userRef.onSnapshot(snapShot => {
-          // onSnapshot adds a listener for documentSnapshot and triggers an action when it happens
+          // onSnapshot, as onAuthStateChanged, adds a listener for documentSnapshot and triggers an action when it happens
           // we are replacing this.setState({currentUser:{whatever}}) evrywhere we want to update currentUser in the store with this.props.setCurrentUser({whatever}) (we dont need the currentUser neither because thets what the action modifies itself) since thats what this action does
           setCurrentUser({
             id: snapShot.id, // we get the id of the registered user from the documentSnapshot
